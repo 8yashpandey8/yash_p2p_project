@@ -1,0 +1,52 @@
+================================================================================
+  QUICK INSTALL GUIDE — Yash Manufacturing P2P Project
+  SAP MM Capstone | KIIT SAP CoE | April 2026
+================================================================================
+
+WHAT IS INCLUDED IN THIS ZIP:
+  ├── abap/YASH_P2P_DASHBOARD.abap           → Main P2P Dashboard Program
+  ├── abap/ZMM_MATERIAL_INVENTORY_REPORT.abap→ Inventory Report Program
+  ├── config/SAP_CONFIGURATION_GUIDE.txt     → Full SAP SPRO setup guide
+  ├── docs/SAP_P2P_Yash_Final_Report.docx    → Project Report (5 pages)
+  ├── screenshots/                           → All 4 required screenshots
+  └── README.md                              → GitHub documentation
+
+--------------------------------------------------------------------------------
+MINIMUM STEPS TO RUN IN SAP (5 minutes):
+--------------------------------------------------------------------------------
+
+1. UPLOAD PROGRAM 1 (P2P Dashboard):
+   - Open SE38
+   - Program name: YASH_P2P_DASHBOARD → Enter → Create
+   - Attributes: Type = Executable, Status = Test Program → Save
+   - Open file: abap/YASH_P2P_DASHBOARD.abap
+   - Paste all code → Ctrl+S (Save) → Ctrl+F3 (Activate)
+
+2. UPLOAD PROGRAM 2 (Inventory Report):
+   - Open SE38
+   - Program name: ZMM_MATERIAL_INVENTORY_REPORT → Create
+   - Paste: abap/ZMM_MATERIAL_INVENTORY_REPORT.abap
+   - Save → Activate
+
+3. CREATE MESSAGE CLASSES (SE91):
+   - Class: YASH_MSG → Message 001 Type I Text: &1 → Save
+   - Class: ZMM_MSG  → Message 001 Type I Text: &1 → Save
+
+4. CREATE T-CODES (SE93):
+   - ZP2P_DASH → Program: YASH_P2P_DASHBOARD → Save
+   - ZMM_INV   → Program: ZMM_MATERIAL_INVENTORY_REPORT → Save
+
+5. RUN:
+   - /nZP2P_DASH → Enter Company Code YM01 → F8 (Execute)
+   - /nZMM_INV   → Enter Plant PL01 → F8 (Execute)
+
+--------------------------------------------------------------------------------
+FOR FULL SAP CONFIGURATION (Company Code, Plant, Vendors, Materials):
+   See: config/SAP_CONFIGURATION_GUIDE.txt
+--------------------------------------------------------------------------------
+
+GITHUB REPOSITORY:
+   Upload all files to GitHub maintaining the same folder structure.
+   The README.md will auto-render as the repository home page.
+
+================================================================================

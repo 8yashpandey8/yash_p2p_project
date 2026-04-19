@@ -1,0 +1,259 @@
+*&======================================================================*
+*& File        : SAP_CONFIGURATION_GUIDE.txt
+*& Description : Step-by-step SAP configuration for Yash Manufacturing
+*&               Complete setup before running any ABAP programs.
+*& Author      : Yash Manufacturing Pvt Ltd | April 2026
+*&======================================================================*
+
+================================================================================
+PART A — ORGANISATIONAL STRUCTURE CONFIGURATION (via SPRO)
+================================================================================
+
+All configuration steps below are performed via:
+  SAP Menu → Tools → Customizing → IMG → Execute Project (T-Code: SPRO)
+
+--------------------------------------------------------------------------------
+STEP 1: Create Company Code YM01
+--------------------------------------------------------------------------------
+  Path  : Enterprise Structure → Definition → Financial Accounting
+            → Define Company Code
+  Action: New Entries
+  Values:
+    Company Code : YM01
+    Company Name : Yash Manufacturing Pvt Ltd
+    City         : Pune
+    Country      : IN
+    Currency     : INR
+    Language     : EN
+    Fiscal Year  : V3 (April to March)
+    Chart of A/c : CAIN
+
+--------------------------------------------------------------------------------
+STEP 2: Create Plant PL01
+--------------------------------------------------------------------------------
+  Path  : Enterprise Structure → Definition → Logistics - General → Define Plant
+  Action: New Entries
+  Values:
+    Plant       : PL01
+    Name        : Yash Pune Plant
+    Name 2      : Chakan Industrial Area, Pune 410501
+    Country     : IN
+    Language    : EN
+
+  Assignment: Enterprise Structure → Assignment → Logistics - General
+                → Assign Plant to Company Code
+    Plant YM01 → Company Code YM01
+
+--------------------------------------------------------------------------------
+STEP 3: Create Storage Locations
+--------------------------------------------------------------------------------
+  T-Code: OX09
+  Plant : PL01
+  Create:
+    SL01 — Raw Materials Store
+    SL02 — Work-in-Progress Store
+    SL03 — Finished Goods Store
+
+--------------------------------------------------------------------------------
+STEP 4: Create Purchasing Organisation PO01
+--------------------------------------------------------------------------------
+  Path  : Enterprise Structure → Definition → Materials Management
+            → Maintain Purchasing Organisation
+  Values:
+    Purch.Org : PO01
+    Description: Yash Central Purchasing
+
+  Assignments:
+    Assign PO01 to Company Code YM01
+    Assign PO01 to Plant PL01
+
+--------------------------------------------------------------------------------
+STEP 5: Create Purchasing Group
+--------------------------------------------------------------------------------
+  T-Code: OME4
+  Create:
+    Purch. Group : YPG
+    Description  : Yash Procurement Group
+    Phone        : +91-20-XXXXXXXX
+
+================================================================================
+PART B — MASTER DATA CREATION
+================================================================================
+
+--------------------------------------------------------------------------------
+B1: Create Vendor Master (T-Code: XK01)
+--------------------------------------------------------------------------------
+  Company Code  : YM01
+  Purch. Org    : PO01
+  Account Group : KRED (Standard vendor)
+
+  Vendor 1 — Electronica Components Ltd:
+    Name         : Electronica Components Ltd
+    Street       : 45 Electronics City Phase 1
+    City         : Bengaluru
+    Country      : IN
+    GSTIN        : 29AABCE1234F1Z5
+    Bank         : ICICI Bank | A/c: 123456789012
+    Payment Terms: NT30 (Net 30 days)
+    Currency     : INR
+    Incoterms    : FOB Bengaluru
+
+  Vendor 2 — Chip World India Pvt Ltd:
+    Name         : Chip World India Pvt Ltd
+    Street       : 12 MIDC Industrial Area
+    City         : Mumbai
+    Country      : IN
+    GSTIN        : 27AABCW5678G1Z3
+    Bank         : HDFC Bank | A/c: 987654321098
+    Payment Terms: NT30
+    Currency     : INR
+
+--------------------------------------------------------------------------------
+B2: Create Material Master (T-Code: MM01)
+--------------------------------------------------------------------------------
+  MATERIAL 1: RM-CW-001
+    Description  : Copper Wire 2.5mm Insulated
+    Industry     : Mech. Engineering (M)
+    Material Type: ROH (Raw Material)
+    Views        : Basic Data 1&2, Purchasing, MRP1&2, Accounting1
+    Basic Data:
+      Unit of Measure : KG
+      Material Group  : RAWMAT
+    MRP:
+      MRP Type    : PD (MRP)
+      Lot Size    : EX (Exact)
+      Reorder Pt  : 100 KG
+    Accounting:
+      Valuation Class : 3000
+      Price Control   : V (Moving Average)
+      Moving Avg Price: 450.00 INR/KG
+    Org Levels: Plant PL01 | Storage Location SL01
+
+  MATERIAL 2: RM-IC-001
+    Description  : ATmega328P Microcontroller
+    Material Type: ROH
+    Unit         : PC
+    Valuation Class: 3000
+    Moving Avg Price: 38.00 INR/PC
+    Org Levels: Plant PL01 | Storage Location SL01
+
+  MATERIAL 3: RM-PCB-003
+    Description  : PCB FR4 Double Layer 100x80mm
+    Material Type: ROH
+    Unit         : PC
+    Moving Avg Price: 450.00 INR/PC
+    Org Levels: Plant PL01 | Storage Location SL01
+
+================================================================================
+PART C — P2P TRANSACTION EXECUTION (Business Scenario)
+================================================================================
+
+--------------------------------------------------------------------------------
+C1: Create Purchase Requisition (T-Code: ME51N)
+--------------------------------------------------------------------------------
+  Document Type  : NB (Standard PR)
+  Item Category  : (blank — standard)
+  Material       : RM-CW-001
+  Quantity       : 500 KG
+  Delivery Date  : [Today + 10 days]
+  Plant          : PL01
+  Storage Loc    : SL01
+  Purchasing Grp : YPG
+  → Save → Note PR Number (e.g., 10000123)
+
+--------------------------------------------------------------------------------
+C2: Create Purchase Order from PR (T-Code: ME21N)
+--------------------------------------------------------------------------------
+  Vendor         : V-1001 (Electronica Components)
+  Purch. Org     : PO01
+  Purch. Group   : YPG
+  Company Code   : YM01
+  Reference PR   : 10000123
+  Item:
+    Material     : RM-CW-001
+    Quantity     : 500 KG
+    Net Price    : 460.00 INR/KG
+    Tax Code     : I1 (GST 18%)
+    Delivery Date: [Today + 10 days]
+  → Save → Note PO Number (e.g., 4500001234)
+
+--------------------------------------------------------------------------------
+C3: Post Goods Receipt (T-Code: MIGO)
+--------------------------------------------------------------------------------
+  Transaction    : Goods Receipt
+  Reference Doc  : Purchase Order
+  PO Number      : 4500001234
+  Movement Type  : 101 (GR for PO)
+  Quantity       : 500 KG
+  Storage Loc    : SL01
+  → Post → Note Material Document Number
+
+--------------------------------------------------------------------------------
+C4: Post Vendor Invoice (T-Code: MIRO)
+--------------------------------------------------------------------------------
+  Transaction    : Enter Incoming Invoice
+  PO Reference   : 4500001234
+  Invoice Date   : [Vendor invoice date]
+  Amount         : 271400.00 INR (incl. GST)
+  Tax Amount     : 41400.00 (GST 18%)
+  → Simulate → Verify 3-way match → Post
+
+--------------------------------------------------------------------------------
+C5: Run Automatic Payment (T-Code: F110)
+--------------------------------------------------------------------------------
+  Run Date       : [Today]
+  Identification : YM01_APR
+  Parameters:
+    Company Code : YM01
+    Payment Method: T (NEFT/Bank Transfer)
+    Next Pay Date : [Today]
+    Vendor        : V-1001
+  → Save Parameters → Proposal → Payment Run
+
+================================================================================
+PART D — EXECUTING THE CUSTOM ABAP REPORTS
+================================================================================
+
+  REPORT 1 — P2P Dashboard:
+    T-Code : ZP2P_DASH  (or SE38 → YASH_P2P_DASHBOARD → Execute)
+    Input  : Company Code = YM01, Plant = PL01
+    Output : ALV grid with all POs and P2P status
+
+  REPORT 2 — Inventory Overview:
+    T-Code : ZMM_INV  (or SE38 → ZMM_MATERIAL_INVENTORY_REPORT → Execute)
+    Input  : Plant = PL01
+    Output : OO ALV grid with unrestricted stock by plant/storage location
+
+================================================================================
+PART E — MESSAGE CLASS SETUP (T-Code: SE91)
+================================================================================
+
+  Message Class 1: YASH_MSG
+    001 (I) — &1
+    002 (E) — &1
+
+  Message Class 2: ZMM_MSG
+    001 (I) — &1
+    002 (E) — &1
+
+================================================================================
+PART F — TRANSPORT REQUEST
+================================================================================
+
+  All custom objects (programs, T-codes, message classes) should be
+  assigned to a single Workbench Transport Request:
+    Request Type : Workbench Request
+    Description  : Yash Manufacturing P2P Custom Development
+
+  Objects to include:
+    R3TR PROG YASH_P2P_DASHBOARD
+    R3TR PROG ZMM_MATERIAL_INVENTORY_REPORT
+    R3TR TRAN ZP2P_DASH
+    R3TR TRAN ZMM_INV
+    R3TR MSAG YASH_MSG
+    R3TR MSAG ZMM_MSG
+
+================================================================================
+END OF CONFIGURATION GUIDE
+Yash Manufacturing Pvt Ltd | SAP MM Capstone | April 2026
+================================================================================
